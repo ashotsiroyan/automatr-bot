@@ -21,6 +21,9 @@ export class Note {
   @Column({ type: 'enum', enum: Status, default: Status.Pending })
   status: Status;
 
+  @Column({ type: 'bytea', nullable: true })
+  imageData: Buffer;
+
   @CreateDateColumn({ name: 'createdAt' })
   createdAt: Date;
 }
