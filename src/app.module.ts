@@ -5,6 +5,7 @@ import { TelegramBotModule } from './telegram-bot/telegram-bot.module';
 import { DatabaseModule } from './database/database.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { join } from 'path';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
     }),
+    ScheduleModule.forRoot(),
     TelegramBotModule,
     DatabaseModule
   ]
