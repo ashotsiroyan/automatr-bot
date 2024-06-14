@@ -65,10 +65,11 @@ export class TelegramBotService {
 
         try{
             const { image, createdAt, status } = await this.databaseService.getAutomationLastNoteById(+id);
-            const { SERVER_URL } = process.env;
+            const { SERVER_HOST } = process.env;
     
-            await ctx.replyWithPhoto({ url: `${SERVER_URL}/images/${image}` }, { caption: `Status: ${status} \n${createdAt.toLocaleString()}` });
+            await ctx.replyWithPhoto({ url: `${SERVER_HOST}/images/${image}` }, { caption: `Status: ${status} \n${createdAt.toLocaleString()}` });
         }catch(error){
+            console.error(error);
             await ctx.reply('No note for this automation');
         }
     }
