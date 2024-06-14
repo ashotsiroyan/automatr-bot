@@ -68,29 +68,32 @@ export class DatabaseService {
     }
 
     async createNote(createNoteDto: CreateNoteDto){
-        const { automationId, image, status } = createNoteDto;
-        const buffer = Buffer.from(image.replace(/^data:image\/jpeg;base64,/, ''), 'base64');
-        let filename = '';
-
         try{
-            filename = Date.now() + '-' + Math.round(Math.random() * 1e9);
-            filename += '.jpeg';
-            const path = join(__dirname, '../../public', 'screenshots');
+            const { automationId, image, status } = createNoteDto;
+            let filename = null;
 
-            fs.mkdirSync(path, { recursive: true });
-            fs.writeFileSync(join(path, filename), buffer);
+            if(image){
+                const buffer = Buffer.from(image.replace(/^data:image\/jpeg;base64,/, ''), 'base64');
+
+                filename = Date.now() + '-' + Math.round(Math.random() * 1e9);
+                filename += '.jpeg';
+                const path = join(__dirname, '../../public', 'screenshots');
+
+                fs.mkdirSync(path, { recursive: true });
+                fs.writeFileSync(join(path, filename), buffer);
+            }
+        
+            return await this.noteRepository.save({
+                automation: {
+                    id: automationId
+                },
+                status,
+                image: filename
+            })
         }catch(error){
             console.error(error);
             throw new InternalServerErrorException('Error saving image');
         }
-        
-        return await this.noteRepository.save({
-            automation: {
-                id: automationId
-            },
-            status,
-            image: filename
-        })
     }
 
     async updateAutomation(id: number, endedAt: string){

@@ -25,11 +25,6 @@ export class TelegramBotService {
         await ctx.reply('👍');
     }
 
-    @Hears('Hi')
-    onText(@Ctx() ctx) {
-        console.log(ctx);
-    }
-
     @Hears('/runningautomations')
     async getRunningAutomations(@Ctx() ctx) {
         const autos = await this.databaseService.findAutomations({ isEnded: false });
@@ -66,8 +61,12 @@ export class TelegramBotService {
         try{
             const { image, createdAt, status } = await this.databaseService.getAutomationLastNoteById(+id);
             const { SERVER_HOST } = process.env;
-    
-            await ctx.replyWithPhoto({ url: `${SERVER_HOST}/screenshots/${image}` }, { caption: `Status: ${status} \n${createdAt.toLocaleString()}` });
+            const caption = `Status: ${status} \n${createdAt.toLocaleString()}`;
+
+            if(image)
+                await ctx.replyWithPhoto({ url: `${SERVER_HOST}/screenshots/${image}` }, { caption });
+            else
+                await ctx.reply(caption);
         }catch(error){
             console.error(error);
             await ctx.reply('No note for this automation');
