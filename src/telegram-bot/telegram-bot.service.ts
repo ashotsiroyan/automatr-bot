@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Action, Ctx, Hears, Help, On, Start, Update } from 'nestjs-telegraf';
 import { chunk } from 'lodash';
 import { DatabaseService } from 'src/database/database.service';
@@ -63,10 +63,10 @@ export class TelegramBotService {
 
     @Hears('/runvfsplugin')
     async runVFSPlugin(@Ctx() ctx) {
-        this.runVFSInterval(20 * 60 * 1000);
+        const { success } = await this.runVFSInterval(20 * 60 * 1000);
 
         await ctx.reply(
-            "Plugin was run"
+            success ? "Plugin was run" : "Something went wrong"
         );
     }
 
@@ -84,12 +84,16 @@ export class TelegramBotService {
         const id = ctx.match[1];
 
         try {
-            const { image, createdAt, status } = await this.databaseService.getAutomationLastNoteById(+id);
-            const { SERVER_HOST } = process.env;
-            const caption = `Status: ${status} \n${createdAt.toLocaleString()}`;
+            const note = await this.databaseService.getAutomationLastNoteById(+id);
 
-            if (image)
-                await ctx.replyWithPhoto({ url: `${SERVER_HOST}/screenshots/${image}` }, { caption });
+            if (!note)
+                throw new NotFoundException();
+
+            const { SERVER_HOST } = process.env;
+            const caption = `Status: ${status} \n${note.createdAt.toLocaleString()}`;
+
+            if (note.image)
+                await ctx.replyWithPhoto({ url: `${SERVER_HOST}/screenshots/${note.image}` }, { caption });
             else
                 await ctx.reply(caption);
         } catch (error) {
@@ -98,10 +102,10 @@ export class TelegramBotService {
         }
     }
 
-    private runVFSInterval(milliseconds: number) {
-        const { VFS_SLUG, VFS_API_KEY } = process.env;
-        
+    private async runVFSInterval(milliseconds: number) {
         const callback = async () => {
+            const { VFS_SLUG, VFS_API_KEY } = process.env;
+
             await this.stopVFSInterval();
 
             const automation = await this.databaseService.createAutomation({
@@ -127,23 +131,45 @@ export class TelegramBotService {
             });
 
             const data = await res.json();
+            console.log(data);
 
-            if(data.success)
+            if (data.success)
                 this.vfs.uuid = data.instance_uuid;
         };
 
-        callback();
+        await callback();
 
         const interval = setInterval(callback, milliseconds);
         this.schedulerRegistry.addInterval('vfs', interval);
+
+        return { success: this.vfs.uuid != null };
     }
 
     private async stopVFSInterval() {
-        if (this.schedulerRegistry.doesExist('interval', 'vfs')){
+        if (this.schedulerRegistry.doesExist('interval', 'vfs')) {
             this.schedulerRegistry.deleteInterval('vfs');
 
-            if(this.vfs.id != null)
+            if (this.vfs.id != null)
                 await this.databaseService.updateAutomation(this.vfs.id, new Date().toISOString());
+
+            if (this.vfs.uuid != null) {
+                const formData = new FormData();
+                const { VFS_API_KEY } = process.env;
+
+
+                formData.append('instance_uuid', this.vfs.uuid);
+                formData.append('api_key', VFS_API_KEY);
+                formData.append('data_json', '{"action":"stop_running_plugin"}');
+
+                await fetch('https://instance.checkout.am/api/v1/SendActionToInstance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                        'charset': 'utf-8'
+                    },
+                    body: formData
+                });
+            }
 
             this.vfs.uuid = null;
             this.vfs.id = null;

@@ -55,9 +55,6 @@ export class DatabaseService {
             .where('note.automationId = :id', { id })
             .getOne();
 
-        if(!note)
-            throw new NotFoundException();
-
         return note
     }
 
@@ -106,9 +103,10 @@ export class DatabaseService {
 
         await this.automationRepository.save(automation);
 
-        const { id: lastId } = await this.getAutomationLastNoteById(id);
+        const note = await this.getAutomationLastNoteById(id);
 
-        await this.noteRepository.delete({ automation, id: Not(lastId) });
+        if(note)
+            await this.noteRepository.delete({ automation, id: Not(note.id) });
 
         return {
             success: true
