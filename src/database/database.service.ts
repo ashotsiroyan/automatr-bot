@@ -7,6 +7,7 @@ import { Note, Status } from './entities/note.entity';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { CreateAutomationDto } from './dto/create-automation.dto';
 import { join } from 'path';
+import { Action } from './entities/action.entity';
 
 @Injectable()
 export class DatabaseService {
@@ -15,7 +16,10 @@ export class DatabaseService {
         private automationRepository: Repository<Automation>,
     
         @InjectRepository(Note)
-        private noteRepository: Repository<Note>
+        private noteRepository: Repository<Note>,
+
+        @InjectRepository(Action)
+        private actionRepository: Repository<Action>,
     ) {}
 
     async findAutomations(filter?: { isEnded?: boolean }){
@@ -35,6 +39,29 @@ export class DatabaseService {
             .getMany();
 
         return notes;
+    }
+
+    async findActions(){
+        const actions = await this.actionRepository
+            .createQueryBuilder('action')
+            .orderBy({
+                'action.id': 'DESC'
+            })
+            .getMany();
+
+        return actions;
+    }
+
+    async findOneActionById(id: number){
+        const action = await this.actionRepository
+            .createQueryBuilder('action')
+            .where('action.id = :id', { id })
+            .orderBy({
+                'action.id': 'DESC'
+            })
+            .getOne();
+
+        return action;
     }
 
     async getOneNoteById(id: number){

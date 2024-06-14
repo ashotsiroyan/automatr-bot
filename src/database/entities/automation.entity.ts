@@ -8,7 +8,7 @@ export class Automation {
   id: number;
 
   @Column({ type: 'varchar' })
-  name: Date;
+  name: string;
 
   @Column({ type: 'timestamp' })
   startedAt: Date;
