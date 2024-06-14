@@ -69,7 +69,7 @@ export class DatabaseService {
 
     async createNote(createNoteDto: CreateNoteDto){
         const { automationId, image, status } = createNoteDto;
-        const buffer = Buffer.from(image, 'base64');
+        const buffer = Buffer.from(image.replace(/^data:image\/jpeg;base64,/, ''), 'base64');
         let filename = '';
 
         try{
