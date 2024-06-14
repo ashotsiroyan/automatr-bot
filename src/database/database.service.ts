@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as fs from 'fs';
 import { Automation } from './entities/automation.entity';
 import { Not, Repository } from 'typeorm';
 import { Note, Status } from './entities/note.entity';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { CreateAutomationDto } from './dto/create-automation.dto';
+import { join } from 'path';
 
 @Injectable()
 export class DatabaseService {
@@ -36,7 +38,7 @@ export class DatabaseService {
     }
 
     async getOneNoteById(id: number){
-        const note = await this.noteRepository.findOne({ where: { id }, select: { id: true, createdAt: true, status: true, imageData: false } });
+        const note = await this.noteRepository.findOneBy({ id });
 
         if(!note)
             throw new NotFoundException();
@@ -67,14 +69,27 @@ export class DatabaseService {
 
     async createNote(createNoteDto: CreateNoteDto){
         const { automationId, image, status } = createNoteDto;
-        const binaryData = Buffer.from(image, 'base64');
+        const buffer = Buffer.from(image, 'base64');
+        let filename = '';
+
+        try{
+            filename = Date.now() + '-' + Math.round(Math.random() * 1e9);
+            filename += '.jpeg';
+            const path = join(__dirname, '../../public', 'screenshots');
+
+            fs.mkdirSync(path, { recursive: true });
+            fs.writeFileSync(join(path, filename), buffer);
+        }catch(error){
+            console.error(error);
+            throw new InternalServerErrorException('Error saving image');
+        }
         
         return await this.noteRepository.save({
             automation: {
                 id: automationId
             },
             status,
-            imageData: binaryData
+            image: filename
         })
     }
 
