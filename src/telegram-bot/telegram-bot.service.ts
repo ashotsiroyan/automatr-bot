@@ -137,9 +137,9 @@ export class TelegramBotService {
         const id = ctx.match[1];
 
         try {
-            const { action } = await this.runPlugin(+id);
+            const { action, exist } = await this.runPlugin(+id);
 
-            if(action.intervalMS)
+            if(action.intervalMS && !exist)
                 this.addInterval(action.id.toString(), action.intervalMS);
 
             await ctx.reply('Action ran');
@@ -174,7 +174,7 @@ export class TelegramBotService {
         if (!action)
             throw new NotFoundException('No Action Found');
 
-        await this.stopRunningPlugin(actionId);
+        const { success: exist } = await this.stopRunningPlugin(actionId);
 
         const automation =  await this.databaseService.createAutomation({
             name: action.name,
@@ -201,7 +201,7 @@ export class TelegramBotService {
 
         await this.databaseService.updateAutomationUuid(automation.id, data.instance_uuid);
 
-        return { action, automation, uuid: data.instance_uuid };
+        return { action, automation, uuid: data.instance_uuid, exist };
     }
 
     private async stopRunningPlugin(actionId: number) {
