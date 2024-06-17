@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException, NotFoundException } from '@ne
 import { InjectRepository } from '@nestjs/typeorm';
 import * as fs from 'fs';
 import { Automation } from './entities/automation.entity';
-import { Not, Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { Note, Status } from './entities/note.entity';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { CreateAutomationDto } from './dto/create-automation.dto';
@@ -85,10 +85,54 @@ export class DatabaseService {
         return note
     }
 
-    async createAutomation(createAutomationDto: CreateAutomationDto){
-        const automation = await this.automationRepository.save(createAutomationDto);
+    async stopRunningAction(id: number): Promise<Automation | null>{
+        const automation = await this.automationRepository.findOneBy({ action: { id }, endedAt: IsNull() });
+
+        if(!automation)
+            return null;
+
+        automation.endedAt = new Date();
+
+        await this.automationRepository.save(automation);
 
         return automation;
+    }
+
+    async findRunningActions(){
+        const automations = await this.automationRepository
+            .createQueryBuilder('automation')
+            .leftJoinAndSelect('automation.action', 'action')
+            .where('automation.actionId IS NOT NULL AND automation.endedAt IS NULL')
+            .getMany();
+
+        return automations;
+    }
+
+    async createAutomation(createAutomationDto: CreateAutomationDto){
+        const automation = await this.automationRepository.save({
+            name: createAutomationDto.name,
+            startedAt: createAutomationDto.startedAt,
+            action: {
+                id: createAutomationDto.actionId
+            }
+        });
+
+        return automation;
+    }
+
+    async updateAutomationUuid(id: number, uuid: string){
+        const automation = await this.automationRepository.findOneBy({ id });
+
+        if(!automation)
+            throw new NotFoundException('Not Automation Found');
+
+        automation.uuid = uuid
+
+        await this.automationRepository.save(automation);
+
+        return {
+            success: true
+        };
     }
 
     async createNote(createNoteDto: CreateNoteDto){

@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import { Automation } from './automation.entity';
 @Entity('action')
 export class Action {
   @PrimaryGeneratedColumn()
@@ -15,6 +16,9 @@ export class Action {
 
   @Column({ type: 'int8', nullable: true })
   intervalMS: number;
+
+  @OneToMany(() => Automation, (automation) => automation.action)
+  automations: Automation[]
 
   @CreateDateColumn({ name: 'createdAt' })
   createdAt: Date;

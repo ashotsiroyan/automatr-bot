@@ -7,8 +7,6 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 @Injectable()
 @Update()
 export class TelegramBotService {
-    private runningActions: { [actionId: string]: { uuId: string, automationId: number } } = {};
-
     constructor(
         private schedulerRegistry: SchedulerRegistry,
         private readonly databaseService: DatabaseService
@@ -89,27 +87,13 @@ export class TelegramBotService {
 
     @Hears('/stopaction')
     async getRunningActions(@Ctx() ctx) {
-        const automations = await this.databaseService.findAutomations({ isEnded: false });
+        const automations = await this.databaseService.findRunningActions();
 
-        const runningActions: { name: string, id: number }[] = [];
-
-        for(let automation of automations){
-            for(let actionId of Object.keys(this.runningActions)){
-                if(automation.id == +actionId){
-                    runningActions.push({
-                        name: automation.name,
-                        id: +actionId
-                    });
-                    break;
-                }
-            }
-        }
-
-        if (runningActions.length) {
+        if (automations.length) {
             const keyboard = chunk(
-                runningActions.map((e) => ({
+                automations.map((e) => ({
                     text: e.name,
-                    callback_data: 'stopAction(' + e.id + ')',
+                    callback_data: 'stopAction(' + e.action.id + ')',
                 }))
                 , 2);
 
@@ -158,25 +142,16 @@ export class TelegramBotService {
         const id = ctx.match[1];
 
         try {
-            if(this.runningActions[id] != undefined)
-                await this.stopPlugin(+id);
+            const { action } = await this.runPlugin(+id);
 
-            const { action, automation, uuId } = await this.runPlugin(+id);
-
-            if(action.intervalMS && this.runningActions[id] == undefined)
-                this.addInterval(automation.id.toString(), action.intervalMS);
-        
-            this.runningActions[action.id] = {
-                uuId,
-                automationId: automation.id
-            };
+            if(action.intervalMS)
+                this.addInterval(action.id.toString(), action.intervalMS);
 
             await ctx.reply('Action ran');
         } catch (error) {
             console.error(error);
-        
-            if(this.runningActions[id] != undefined)
-                await this.stopPlugin(+id);
+
+            await this.stopRunningPlugin(+id);
     
             await ctx.reply(error.message);
         }
@@ -187,9 +162,7 @@ export class TelegramBotService {
         const id = ctx.match[1];
 
         try {
-            if(this.runningActions[id] != undefined){
-                await this.stopPlugin(+id);
-            }
+            await this.stopRunningPlugin(+id);
 
             this.deleteInterval(id);
 
@@ -201,14 +174,17 @@ export class TelegramBotService {
     }
 
     async runPlugin(actionId: number) {
-        const action = await this.databaseService.findOneActionById(+actionId);
+        const action = await this.databaseService.findOneActionById(actionId);
 
         if (!action)
             throw new NotFoundException('No Action Found');
 
-        const automation = await this.databaseService.createAutomation({
+        await this.stopRunningPlugin(actionId);
+
+        const automation =  await this.databaseService.createAutomation({
             name: action.name,
-            startedAt: new Date()
+            startedAt: new Date(),
+            actionId: action.id
         });
 
         const formData = new FormData();
@@ -228,18 +204,22 @@ export class TelegramBotService {
         if (!data.success)
             throw new InternalServerErrorException(data.message);
 
-        return { action, automation, uuId: data.instance_uuid };
+        await this.databaseService.updateAutomationUuid(automation.id, data.instance_uuid);
+
+        return { action, automation, uuid: data.instance_uuid };
     }
 
-    private async stopPlugin(actionId: number) {
-        const { automationId, uuId } = this.runningActions[actionId];
-        const { apiKey } = await this.databaseService.findOneActionById(actionId);
+    private async stopRunningPlugin(actionId: number) {
+        const automation = await this.databaseService.stopRunningAction(+actionId);
 
-        await this.databaseService.updateAutomation(automationId, new Date().toISOString());
+        if(!automation)
+            return { success: false }
+
+        const { apiKey } = await this.databaseService.findOneActionById(actionId);
 
         const formData = new FormData();
 
-        formData.append('instance_uuid', uuId);
+        formData.append('instance_uuid', automation.uuid);
         formData.append('api_key', apiKey);
         formData.append('data_json', '{"action":"stop_running_plugin"}');
 
@@ -247,22 +227,19 @@ export class TelegramBotService {
             method: 'POST',
             body: formData
         });
+
+        return { success: true }
     }
 
     private addInterval(actionId: string, milliseconds: number) {
-        console.log('interval created');
-        
         const callback = async () => {
-            console.log('interval');
-            
-            await this.stopPlugin(+actionId);
-
-            const { automation, uuId } = await this.runPlugin(+actionId);
-
-            this.runningActions[actionId] = {
-                uuId,
-                automationId: automation.id
-            };
+            try {
+                await this.runPlugin(+actionId);
+            } catch (error) {
+                console.error(error);
+    
+                await this.stopRunningPlugin(+actionId);
+            }
         };
 
         const interval = setInterval(callback, milliseconds);
@@ -270,12 +247,9 @@ export class TelegramBotService {
     }
 
     private async deleteInterval(actionId: string) {
-        this.schedulerRegistry.deleteInterval(actionId);
+        if(this.schedulerRegistry.doesExist('interval', actionId))
+            this.schedulerRegistry.deleteInterval(actionId);
 
-        if (this.runningActions[actionId]) {
-            await this.stopPlugin(+actionId);
-
-            delete this.runningActions[actionId];
-        }
+        await this.stopRunningPlugin(+actionId);
     }
 }
