@@ -140,6 +140,11 @@ export class DatabaseService {
             const { automationId, image, status } = createNoteDto;
             let filename = null;
 
+            const automation = await this.automationRepository.findOneBy({ id: automationId });
+
+            if(!automation)
+                throw new InternalServerErrorException('Not Automation Found');
+
             if(image){
                 const buffer = Buffer.from(image.replace(/^data:image\/jpeg;base64,/, ''), 'base64');
 
