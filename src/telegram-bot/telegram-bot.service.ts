@@ -216,7 +216,7 @@ export class TelegramBotService {
 
         formData.append('instance_uuid', automation.uuid);
         formData.append('api_key', apiKey);
-        formData.append('data_json', '{"action":"stop_running_plugin"}');
+        formData.append('data_json', "{\"action\":\"stop_running_plugin\"}");
 
         await fetch('https://instance.checkout.am/api/v1/SendActionToInstance', {
             method: 'POST',
