@@ -178,7 +178,6 @@ export class TelegramBotService {
 
         const automation =  await this.databaseService.createAutomation({
             name: action.name,
-            startedAt: new Date(),
             actionId: action.id
         });
 

@@ -109,13 +109,16 @@ export class DatabaseService {
     }
 
     async createAutomation(createAutomationDto: CreateAutomationDto){
-        const automation = await this.automationRepository.save({
-            name: createAutomationDto.name,
-            startedAt: createAutomationDto.startedAt,
-            action: {
+        const values: { [name: string]: any } = {
+            name: createAutomationDto.name
+        }
+
+        if(createAutomationDto.actionId)
+            values.action = {
                 id: createAutomationDto.actionId
             }
-        });
+
+        const automation = await this.automationRepository.save(values);
 
         return automation;
     }

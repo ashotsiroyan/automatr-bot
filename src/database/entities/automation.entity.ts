@@ -1,5 +1,5 @@
 
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, CreateDateColumn } from 'typeorm';
 import { Note } from './note.entity';
 import { Action } from './action.entity';
 
@@ -11,7 +11,7 @@ export class Automation {
   @Column({ type: 'varchar' })
   name: string;
 
-  @Column({ type: 'timestamp' })
+  @CreateDateColumn({ name: 'startedAt' })
   startedAt: Date;
 
   @Column({ type: 'timestamp', nullable: true })
