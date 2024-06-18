@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TelegramBotModule } from './telegram-bot/telegram-bot.module';
-import { DatabaseModule } from './database/database.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ScheduleModule } from '@nestjs/schedule';
+import { AutomationsModule } from './automations/automations.module';
 
 @Module({
   imports: [
@@ -33,7 +33,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     }),
     ScheduleModule.forRoot(),
     TelegramBotModule,
-    DatabaseModule
+    AutomationsModule
   ]
 })
 export class AppModule {}

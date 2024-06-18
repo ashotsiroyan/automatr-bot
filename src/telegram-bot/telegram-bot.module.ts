@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TelegramBotService } from './telegram-bot.service';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DatabaseModule } from 'src/database/database.module';
+import { AutomationsModule } from 'src/automations/automations.module';
 
 @Module({
   imports: [
@@ -13,7 +13,7 @@ import { DatabaseModule } from 'src/database/database.module';
       }),
       inject: [ConfigService],
     }),
-    DatabaseModule
+    AutomationsModule
   ],
   controllers: [],
   providers: [TelegramBotService],
