@@ -171,7 +171,10 @@ export class AutomationsService {
 
                 if (sendToChannel && automation.action.channelId) {
                     const { SERVER_HOST } = process.env;
-                    await this.bot.telegram.sendMessage(
+
+                    await this.delay(1000 * 60 * 2);
+
+                    await this.bot.telegram.sendPhoto(
                         automation.action.channelId,
                         `${SERVER_HOST}/screenshots/${automation.id}/${filename}`,
                     );
@@ -288,6 +291,10 @@ export class AutomationsService {
         return {
             success: true,
         };
+    }
+
+    private delay(ms: number) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     @Cron('0 0 * * *')
