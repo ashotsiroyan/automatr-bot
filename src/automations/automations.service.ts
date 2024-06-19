@@ -172,7 +172,7 @@ export class AutomationsService {
                 if (sendToChannel && automation.action.channelId) {
                     const { SERVER_HOST } = process.env;
 
-                    await this.delay(1000 * 60 * 2);
+                    await this.delay(1000 * 2);
 
                     await this.bot.telegram.sendPhoto(
                         automation.action.channelId,
