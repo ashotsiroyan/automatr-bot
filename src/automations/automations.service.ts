@@ -167,17 +167,15 @@ export class AutomationsService {
                 );
 
                 await fs.mkdir(path, { recursive: true });
-                await fs.writeFile(join(path, filename), buffer).then(async () => {
-                    if (sendToChannel && automation.action.channelId) {
-                        const { SERVER_HOST } = process.env;
-                        await this.bot.telegram.sendMessage(
-                            automation.action.channelId,
-                            `${SERVER_HOST}/screenshots/${automation.id}/${filename}`,
-                        );
-                    }
+                await fs.writeFile(join(path, filename), buffer);
 
-                    return true
-                })
+                if (sendToChannel && automation.action.channelId) {
+                    const { SERVER_HOST } = process.env;
+                    await this.bot.telegram.sendMessage(
+                        automation.action.channelId,
+                        `${SERVER_HOST}/screenshots/${automation.id}/${filename}`,
+                    );
+                }
             }
 
             return await this.noteRepository.save({
