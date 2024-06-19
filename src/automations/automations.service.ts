@@ -172,12 +172,7 @@ export class AutomationsService {
                 if (sendToChannel && automation.action.channelId) {
                     const { SERVER_HOST } = process.env;
 
-                    setTimeout(()=>{
-                        this.bot.telegram.sendPhoto(
-                            automation.action.channelId,
-                            `${SERVER_HOST}/screenshots/${automation.id}/${filename}`,
-                        );
-                    }, 1000 * 5)
+                    await this.bot.telegram.sendPhoto(automation.action.channelId, { url: `${SERVER_HOST}/screenshots/${automation.id}/${filename}` });
                 }
             }
 
