@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+} from 'typeorm';
 import { Automation } from './automation.entity';
 
 export enum Status {
@@ -7,7 +13,7 @@ export enum Status {
   Completed = 'completed',
   Failed = 'failed',
   Retrying = 'retrying',
-  Skipped = 'skipped'
+  Skipped = 'skipped',
 }
 
 @Entity('note')
@@ -15,7 +21,9 @@ export class Note {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Automation, (automation) => automation.notes, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Automation, (automation) => automation.notes, {
+    onDelete: 'CASCADE',
+  })
   automation: Automation;
 
   @Column({ type: 'enum', enum: Status, default: Status.Pending })

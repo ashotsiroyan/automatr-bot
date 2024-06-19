@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  OneToMany,
+} from 'typeorm';
 import { Automation } from './automation.entity';
 @Entity('action')
 export class Action {
@@ -17,8 +23,11 @@ export class Action {
   @Column({ type: 'int8', nullable: true })
   intervalMS: number;
 
+  @Column({ type: 'varchar', length: 14, nullable: true })
+  channelId: string;
+
   @OneToMany(() => Automation, (automation) => automation.action)
-  automations: Automation[]
+  automations: Automation[];
 
   @CreateDateColumn({ name: 'createdAt' })
   createdAt: Date;

@@ -1,4 +1,4 @@
-export class CreateAutomationDto{
-    name: string;
-    actionId?: number
+export class CreateAutomationDto {
+  name: string;
+  actionId?: number;
 }

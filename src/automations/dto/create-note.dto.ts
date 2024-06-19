@@ -1,7 +1,8 @@
-import { Status } from "../entities/note.entity";
+import { Status } from '../entities/note.entity';
 
-export class CreateNoteDto{
-    automationId: number;
-    status: Status;
-    image: string;
+export class CreateNoteDto {
+  automationId: number;
+  status: Status;
+  image: string;
+  sendToChannel?: boolean;
 }

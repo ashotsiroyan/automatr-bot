@@ -7,11 +7,9 @@ import { Note } from './entities/note.entity';
 import { Action } from './entities/action.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Automation, Note, Action]),
-  ],
+  imports: [TypeOrmModule.forFeature([Automation, Note, Action])],
   controllers: [AutomationsController],
   providers: [AutomationsService],
-  exports: [AutomationsService]
+  exports: [AutomationsService],
 })
 export class AutomationsModule {}

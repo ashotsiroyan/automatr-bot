@@ -13,7 +13,7 @@ import { AutomationsModule } from 'src/automations/automations.module';
       }),
       inject: [ConfigService],
     }),
-    AutomationsModule
+    AutomationsModule,
   ],
   controllers: [],
   providers: [TelegramBotService],
