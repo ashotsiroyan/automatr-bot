@@ -306,7 +306,7 @@ export class AutomationsService {
             try {
                 const dir = join(path, id.toString());
 
-                await fs.rm(dir, { recursive: true });
+                await fs.rm(dir, { recursive: true, force: true });
             } catch (error) {
                 continue;
             }
