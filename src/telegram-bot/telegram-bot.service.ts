@@ -34,7 +34,7 @@ export class TelegramBotService {
           text: e.name + ': ' + e.id,
           callback_data: 'getLastImage(' + e.id + ')',
         })),
-        2,
+        1,
       );
 
       const options = {
@@ -82,7 +82,7 @@ export class TelegramBotService {
           text: e.name,
           callback_data: 'stopAction(' + e.action.id + ')',
         })),
-        2,
+        1,
       );
 
       const options = {
